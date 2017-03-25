@@ -167,12 +167,15 @@ public:
     any() : state(EMPTY), data(nullptr) {}
 
     any(const any &other) : state(other.state), data(other.data) {
+        // std::cout << "1\n";
         if (!other.empty()) {
             other.data->copy(other.storage, storage);
         }
     }
 
+
     any(any &&other) : state(other.state), data(other.data) {
+        // std::cout << "2\n";
         if (!other.empty()) {
             other.data->move(other.storage, storage);
             other.data = nullptr;
@@ -180,22 +183,28 @@ public:
     }
 
     any &operator=(const any &other) {
+        // std::cout << "3\n";
         any(other).swap(*this);
         return *this;
     }
 
     any &operator=(any &&other) {
+        // std::cout << "4\n";
         any(std::move(other)).swap(*this);
         return *this;
     }
 
-    template<typename ValueType>
-    any(ValueType &&value) {
-        construct(std::forward<ValueType>(value));
+    template<typename T,
+    typename = typename std::enable_if<!std::is_same<any, std::decay_t<T>>::value>::type
+    > 
+    any(T &&value) {
+        // std::cout << "5\n";
+        construct(std::forward<T>(value));
     }
 
     template<typename ValueType>
     any &operator=(ValueType &&value) {
+        // std::cout << "6\n";  
         any(std::forward<ValueType>(value)).swap(*this);
         return *this;
     }
@@ -240,6 +249,14 @@ public:
     template<typename T>
     friend T* any_cast(any * operand);
 
+    template <typename VT>
+    friend VT any_cast(const any& operand);
+
+    template <typename VT>
+    friend VT any_cast(any& operand);
+
+    template <typename VT>
+    friend VT any_cast(any&& operand);
 };
 
     struct  bad_any_cast :public std::exception{
@@ -247,19 +264,43 @@ public:
 };
 
 
+template <typename VT>
+    VT any_cast(const any& operand) {
+    // if (operand.type() != typeid(VT))
+    //     throw new bad_any_cast();
+    // else
+        return *operand.cast<VT>();
+}
+
+template <typename VT>
+    VT any_cast(any& operand) {
+    // if (operand.type() != typeid(VT))
+    //     throw new bad_any_cast();
+    // else
+        return *operand.cast<VT>();
+}
+
+template <typename VT>
+    VT any_cast(any&& operand) {
+    // if (operand.type() != typeid(VT))
+    //     throw new bad_any_cast();
+    // else
+        return *operand.cast<VT>();
+}
+
 template<typename T>
 const T *any_cast(const any *operand) {
-    if (operand == nullptr || operand->type() != typeid(T))
-        throw new bad_any_cast();
-    else
+    // if (operand == nullptr || operand->type() != typeid(T))
+    //     throw new bad_any_cast();
+    // else
         return operand->cast<T>();
 }
 
 template<typename T>
 T *any_cast(any *operand) {
-    if (operand == nullptr || operand->type() != typeid(T))
-        throw new bad_any_cast();
-    else
+    // if (operand == nullptr || operand->type() != typeid(T))
+    //     throw new bad_any_cast();
+    // else
         return operand->cast<T>();
 }
 
