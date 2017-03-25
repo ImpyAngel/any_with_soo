@@ -208,9 +208,26 @@ public:
         }
     }
 
-    void swap(any &other) {
-        std::swap(data, other.data);
-        std::swap(state,other.state);
+    void swap(any &other) {     
+        if (data != other.data) {
+            any tmp(std::move(other));
+            other.data = data;
+            other.state = state;
+            if (state != EMPTY) {
+                data->move(storage, other.storage);
+            }
+            data = tmp.data;
+            state = tmp.state;
+            if (tmp.data != nullptr) {
+                tmp.data->move(tmp.storage, storage);
+                tmp.data = nullptr;
+                tmp.state = EMPTY;
+            }
+        } else {
+            if (state != EMPTY) {
+                data->swap(storage, other.storage);
+            }
+}
     }
 
     bool empty() const {
